@@ -5,6 +5,8 @@ API to get the cheapest chocolate prices by combining boxes, packs and bars.
 The API receives the number of chocolate bars needed by the user, the prices of bars, packs and boxes, and the number of bars included in a pack and box.
 The API then returns the cheapest combination of boxes, packs and individual bars to satisfy the requirement, as well as the total price.
 
+At the moment the implementation assumes that the chocolates are cheapest in boxes, and most expensive as bars.
+
 Example usage:
 
 POST /price
