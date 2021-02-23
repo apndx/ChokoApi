@@ -10,7 +10,7 @@ app.get('/', (request, response) => {
   response.send('<h1>Welcome to browse chocolate prices!</h1>')
 })
 
-app.post('/price', async (request, response) => {
+app.post('/price', (request, response) => {
 
   const priceRequest = request.body
   try {
