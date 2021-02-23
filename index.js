@@ -1,4 +1,5 @@
 const express = require('express')
+const { maxHeaderSize } = require('http')
 const app = express()
 
 app.use(express.json())
@@ -22,22 +23,78 @@ app.post('/price', async (request, response) => {
       return response.status(401).json({ error: 'Faulty input' })
     }
 
-    const boxCount = Math.floor(priceRequest.count / priceRequest.boxSize)
-    const packCount = Math.floor((priceRequest.count % priceRequest.boxSize) / priceRequest.packSize)
-    const barCount = (priceRequest.count % priceRequest.boxSize) % priceRequest.packSize
+    const packPriceSingle = packPrice / packSize
+    const boxPriceSingle = boxPrice / boxSize
+    const prices = [barPrice, packPriceSingle, boxPriceSingle]
 
-    const totalPrice = boxCount * priceRequest.boxPrice + packCount * priceRequest.packPrice + barCount * priceRequest.barPrice
+    console.log(packPriceSingle, boxPriceSingle, barPrice)
+    console.log(Math.max(...prices))
+    if (Math.max(...prices) === barPrice && Math.min(...prices) === boxPriceSingle) {
+      // In this case the boxes are cheapest, and the bars are most expensive
+      const boxCount = Math.floor(count / boxSize)
+      const packCount = Math.floor((count % boxSize) / packSize)
+      const barCount = (count % boxSize) % packSize
 
-    const priceResponse = {
-      'boxCount': boxCount,
-      'packCount': packCount,
-      'barCount': barCount,
-      'totalPrice': totalPrice
+      const totalPrice = boxCount * boxPrice + packCount * packPrice + barCount * barPrice
+
+      const priceResponse = {
+        'boxCount': boxCount,
+        'packCount': packCount,
+        'barCount': barCount,
+        'totalPrice': totalPrice
+      }
+      response.json(priceResponse)
+
+    } else if (Math.max(...prices) === packPriceSingle && Math.min(...prices) === boxPriceSingle) {
+      // in this case the boxes are the cheapest and the packs are most expensive
+      const boxCount = Math.floor(count / boxSize)
+      const packCount = 0
+      const barCount = count % boxSize
+      const totalPrice = boxCount * boxPrice + barCount * barPrice
+
+      const priceResponse = {
+        'boxCount': boxCount,
+        'packCount': packCount,
+        'barCount': barCount,
+        'totalPrice': totalPrice
+      }
+      response.json(priceResponse)
+
+    } else if (Math.min(...prices) === packPriceSingle) {
+      // in this case the packs are cheapest
+      const boxCount = 0
+      const packCount = Math.floor(count / packSize)
+      const barCount = count / packSize
+      const totalPrice = packCount * packPrice + barCount * barPrice
+
+      const priceResponse = {
+        'boxCount': boxCount,
+        'packCount': packCount,
+        'barCount': barCount,
+        'totalPrice': totalPrice
+      }
+      response.json(priceResponse)
+    } else if (Math.min(...prices) === barPrice) {
+      // in this case the single bars are the cheapest option
+      const boxCount = 0
+      const packCount = 0
+      const barCount = count
+      const totalPrice = barCount * barPrice
+
+      const priceResponse = {
+        'boxCount': boxCount,
+        'packCount': packCount,
+        'barCount': barCount,
+        'totalPrice': totalPrice
+      }
+      response.json(priceResponse)
+    } else {
+      return response.status(500).json({ error: 'Calculation scenario was not recognised' })
     }
-    response.json(priceResponse)
+
   } catch (exception) {
     console.log(exception)
-    response.status(500).json({ error: 'something went wrong...' })
+    response.status(500).json({ error: 'Something went wrong...' })
   }
 
 })
@@ -46,3 +103,4 @@ const PORT = 3003
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
 })
+
